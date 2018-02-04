@@ -11,3 +11,32 @@ exports.sequenceFrame_ = function(xs) {
     };
   };
 };
+
+
+// oncePerFrame_ :: Frame Unit -> IOSync (Frame Unit)
+// oncePerFrame_ action = do
+//   ref <- newIORef Nothing
+//   pure $ do
+//     time <- framePull $ getTime
+//     m_lastTime <- framePull $ pullReadIORef ref
+//     case m_lastTime of
+//       Just lastTime | lastTime == time ->
+//         pure unit
+//       _ -> do
+//         frameWriteIORef ref (Just time)
+//         action
+exports.oncePerFrame_ = function(action) {
+  return function() {
+    var lastTime = null;
+    return function(effects) {
+      return function(time) {
+        return function oncePerFrame_eff() {
+          if(lastTime !== time) {
+            lastTime = time;
+            action(effects)(time)();
+          }
+        };
+      };
+    };
+  };
+};
